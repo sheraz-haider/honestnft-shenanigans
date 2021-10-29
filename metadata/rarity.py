@@ -1,7 +1,7 @@
+import os
 import argparse
 import numpy as np
 import pandas as pd
-
 
 def max_variety_count(trait_db, trait_types):
     # Get the number of trait values in the largest trait class
@@ -121,7 +121,7 @@ def build_rarity_db(collection, attribute_file, method, trait_count, sum_traits,
     rarity_db = gen_rarity_score(trait_db, trait_names, method, trait_count, sum_traits, sum_trait_multiplier)
 
     # Write rarity data to disk
-    rarity_db.to_csv(f'rarity_data/{collection}_{method}.csv')
+    rarity_db.to_csv(os.path.join(os.path.dirname(__file__), f'rarity_data/{collection}_{method}.csv'))
 
     # Print top 5 items
     print(rarity_db.head(5).T)
@@ -139,7 +139,8 @@ if __name__ == '__main__':
     ARGS = ARG_PARSER.parse_args()
 
     # Build attribute file
-    ATTRIBUTE_FILE = f'raw_attributes/{ARGS.collection}.csv'
+    # ATTRIBUTE_FILE = f'raw_attributes/{ARGS.collection}.csv'
+    ATTRIBUTE_FILE = os.path.join(os.path.dirname(__file__), f'raw_attributes/{ARGS.collection}.csv')
 
     # Build rarity database and save to disk
     build_rarity_db(ARGS.collection, ATTRIBUTE_FILE, ARGS.method, ARGS.trait_count, ARGS.sum_traits, ARGS.sum_trait_mult)

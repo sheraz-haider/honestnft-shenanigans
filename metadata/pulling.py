@@ -173,7 +173,7 @@ def fetch_all_metadata(token_ids, collection, sleep, uri_func, contract, abi, ur
     for token_id in token_ids:
 
         # Create raw attribute folder for collection if it doesnt already exist
-        folder = f'{ATTRIBUTES_FOLDER}/{collection}/'
+        folder = os.path.join(os.path.dirname(__file__), f'{ATTRIBUTES_FOLDER}/{collection}/')
         if not os.path.exists(folder):
             os.mkdir(folder)
 
@@ -182,6 +182,15 @@ def fetch_all_metadata(token_ids, collection, sleep, uri_func, contract, abi, ur
 
         # Check if metadata file already exists
         filename = f'{folder}/{token_id}.json'
+
+        if os.path.exists(filename):
+            # Load existing file from disk
+            with open(filename, 'r') as f:
+                fileJson = json.load(f)
+                if 'error' in fileJson:
+                    os.remove(filename)
+
+
         if os.path.exists(filename):
             # Load existing file from disk
             with open(filename, 'r') as f:
@@ -217,6 +226,8 @@ def fetch_all_metadata(token_ids, collection, sleep, uri_func, contract, abi, ur
                 try:
                     # Try to get metadata file from server
                     result_json = get_metadata(uri=metadata_uri, destination=filename)
+                    if 'error' in result_json:
+                        raise ValueError(result_json)
                     if token_id % 50 == 0:
                         print(token_id)
                     time.sleep(sleep)
@@ -229,7 +240,8 @@ def fetch_all_metadata(token_ids, collection, sleep, uri_func, contract, abi, ur
                     retries += 1
 
                     # Sleep for successively longer periods of time before restarting
-                    time.sleep(sleep * retries)
+                    # time.sleep(sleep * retries)
+                    time.sleep(5 * retries)
 
                     # Throw an error when max retries is exceeded
                     if retries >= max_retries:
@@ -340,7 +352,7 @@ def pull_metadata(args):
     print(f'Max supply: {max_supply}')
 
     # Fetch all attribute records from the remote server
-    token_ids = range(lower_id, upper_id + 1)
+    token_ids = range(lower_id, upper_id)
     records = fetch_all_metadata(
         token_ids=token_ids,
         collection=collection,
@@ -356,7 +368,7 @@ def pull_metadata(args):
     trait_db = pd.DataFrame.from_records(records)
     trait_db = trait_db.set_index('TOKEN_ID')
     print(trait_db.head())
-    trait_db.to_csv(f'{ATTRIBUTES_FOLDER}/{collection}.csv')
+    trait_db.to_csv(os.path.join(os.path.dirname(__file__), f'{ATTRIBUTES_FOLDER}/{collection}.csv'))
 
 
 if __name__ == '__main__':
